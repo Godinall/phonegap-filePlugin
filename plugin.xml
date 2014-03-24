@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+           id="FileManager"
+      version="1">
+
+    <name>FileManager</name>
+    <description>File plugin</description>
+    <license>Apache 2.0</license>
+    <keywords>file</keywords>
+
+    <!-- ios -->
+    <platform name="ios">
+        <js-module src="www/FileManager.js" name="FileManager">
+            <clobbers target="cordova.fileManager" />
+        </js-module>
+        <config-file target="config.xml" parent="/*">
+            <feature name="FileManagerManager">
+                <param name="ios-package" value="FileManager" /> s
+            </feature>
+        </config-file>
+
+	   <header-file src="src/ios/FileManager.h" />
+	   <source-file src="src/ios/FileManager.m" />
+    </platform>
+
+</plugin>
