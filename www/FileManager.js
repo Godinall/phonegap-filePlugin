@@ -77,7 +77,7 @@ FileManager.prototype.openFile = function(options, callBackFunction) {
 		options = {};
 	}
 	this.resultCallback = callBackFunction;
-    cordova.exec("FileManager.openFile", options);
+    cordova.exec(null,null,"FileManager", "openFile", [options]);
 };
 
 

@@ -8,11 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import <Cordova/CDVPlugin.h>
-#ifdef PHONEGAP_FRAMEWORK
-#import <PhoneGap/PhoneGapViewController.h>
-#else
-#import "PhoneGapViewController.h"
-#endif
 
 
 
@@ -81,6 +76,6 @@ int FILE_MANAGER_PROGRESS = 8;
 
 @property (nonatomic, retain) UIDocumentInteractionController *docInteractionController;
 
-- (void)openFile:(NSMutableArray*)file withDict:(NSMutableDictionary*)options;
+- (void) openFile:(CDVInvokedUrlCommand*)command;
 
 @end

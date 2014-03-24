@@ -7,12 +7,6 @@
 //
 
 #import "FileManager.h"
-#import <Cordova/CDVPlugin.h>
-#ifdef PHONEGAP_FRAMEWORK
-#import <PhoneGap/PhoneGapViewController.h>
-#else
-#import "PhoneGapViewController.h"
-#endif
 
 
 @implementation FileManager
@@ -57,7 +51,7 @@
 	if (theConnection) {
 		// Create the NSMutableData to hold the received data.
 		// receivedData is an instance variable declared elsewhere.
-		receivedData = [[NSMutableData data] retain];
+		receivedData = [NSMutableData data];
 	} else {
 		[self notifyUserAboutEvent: FILE_MANAGER_COULD_NOT_CONNECT];
 	}
@@ -76,10 +70,11 @@
 
 
 //- (void)openFile:(NSMutableArray*)file withDict:(NSMutableDictionary*)options
-- (void) addEvent:(CDVInvokedUrlCommand*)command
+- (void) openFile:(CDVInvokedUrlCommand*)command
 {	
 	NSDictionary* options = [command.arguments objectAtIndex:0];
 	NSString *url = [options valueForKey:@"fileUrl"];
+    NSLog(@"openFile fileManager.m");
 	if ([url length] == 0) {
 		[self notifyUserAboutEvent: FILE_MANAGER_FILE_URL_MISSING];
 		return;
@@ -114,8 +109,6 @@
 		 NSLog(@"Could not open file");
 		 [self notifyUserAboutEvent: FILE_MANAGER_FILE_COULD_NOT_BE_PREVIEWED];
 	 }
-	 [filePath release];
-     [suggestedFilename release];
 }
 
 
@@ -134,8 +127,7 @@
 
 -  (UIViewController *) documentInteractionControllerViewControllerForPreview: (UIDocumentInteractionController *) controller
 {
-	PhoneGapViewController* cont = (PhoneGapViewController*)[ super appViewController ];
-	return cont;
+	return self.viewController;
 }
 
 - (void) documentInteractionControllerWillBeginPreview: (UIDocumentInteractionController *) controller
@@ -150,8 +142,6 @@
 	NSString *deleteFilePath = [[NSString alloc] initWithFormat:@"%@/%@", documentsDirectory, controller.name];
 	NSFileManager *fileManager = [[NSFileManager alloc] init];
 	[fileManager removeItemAtPath:deleteFilePath error:NULL];
-	[fileManager release];
-	[deleteFilePath release];
 }
 
 - (void)documentInteractionController:(UIDocumentInteractionController *)controller willBeginSendingToApplication:(NSString *)application
@@ -174,7 +164,7 @@
 {	
 	totalLength = [response expectedContentLength];
     suggestedFilename = [[NSString alloc] initWithFormat:@"%@", [response suggestedFilename]];
-	NSLog(@"did receive response, expected length: %i", [response expectedContentLength]);
+	NSLog(@"did receive response, expected length: %lli", [response expectedContentLength]);
     NSLog(@"suggestedFilename %@", suggestedFilename);
 	// This method is called when the server has determined that it
     // has enough information to create the NSURLResponse.
@@ -186,10 +176,15 @@
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
 {
-	totalDownloaded = totalDownloaded + [data length];
-	float downloaded = 0;
-	downloaded = totalDownloaded * 100 / totalLength;
-	NSLog(@"did receive data percentt: %0.1f  length: %i", downloaded, [data length]);
+    float downloaded = 0;
+    if (totalLength == NSURLResponseUnknownLength) {
+        downloaded = -1;
+    }
+    else {
+        totalDownloaded = totalDownloaded + [data length];
+        downloaded = totalDownloaded * 100 / totalLength;
+        NSLog(@"did receive data percentt: %0.1f  length: %i", downloaded, [data length]);
+    }
 	[self notifyUserAboutProgress: downloaded];
     [receivedData appendData:data];
 }
@@ -197,14 +192,6 @@
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
-    // release the connection, and the data object
-    [connection release];
-    [receivedData release];
-	[filePath release];
-    if (suggestedFilename != nil) {
-        [suggestedFilename release];
-    }
-	
 	[self notifyUserAboutEvent: FILE_MANAGER_COULD_NOT_CONNECT];
     //NSLog(@"Connection failed! Error - %@ %@", [error localizedDescription],[[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey]);
 }
@@ -215,7 +202,6 @@
     NSLog(@"Succeeded! Received %d bytes of data",[receivedData length]);
 	
 	[self notifyUserAboutEvent: FILE_MANAGER_DOWNLOAD_FINISHED];
-    [connection release];
     
     if (suggestedFilename != nil && [suggestedFilename isEqualToString:@"unknown"] == NO) {
         NSLog(@"Use suggested filename %@", suggestedFilename);
@@ -228,8 +214,6 @@
         NSLog (@"Couldn't create the file\n");
 		[self notifyUserAboutEvent: FILE_MANAGER_FILE_COULD_NOT_BE_CREATED];
 	}
-	[receivedData release];
-	[fileManager release];
 	[self previewDownloadedFile];
 }
 
